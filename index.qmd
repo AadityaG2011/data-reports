@@ -1,0 +1,121 @@
+---
+title: "Data Reports"
+execute: 
+    echo: false
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+library(lubridate)
+library(tidytext)
+df1 <- read_csv("data/data-reporting- trello.csv", show_col_types = FALSE)
+df2 <- read_csv("data/bonds-new-platform - trello.csv", show_col_types = FALSE)
+```
+
+```{r}
+# Graph 1
+df1 |> 
+  filter(!is.na(Status)) |> 
+  count(Status) |> 
+  ggplot(aes(x = reorder(Status, n), y = n, fill = Status)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Workload by Task Status",
+    x = "Status",
+    y = "Number of Tasks"
+  ) +
+  theme_minimal()
+
+# Graph 2
+df1 |> 
+  filter(!is.na(Priority)) |> 
+  count(Priority) |> 
+  ggplot(aes(x = reorder(Priority, -n), y = n, fill = Priority)) +
+  geom_col() +
+  labs(
+    title = "Task Count by Priority Level",
+    x = "Priority",
+    y = "Number of Tasks"
+  ) +
+  theme_minimal()
+
+# Graph 3
+df_clean <- df1 |> 
+  mutate(Date = as.Date(`Due Date`, format = "%Y-%m-%d"),
+         Year = year(Date),
+         Month = month(Date, label = TRUE, abbr = TRUE)) |> 
+  filter(!is.na(Date))
+
+# Count the number of cards per Month-Year
+monthly_card_counts <- df_clean |> 
+  group_by(Year, Month) |> 
+  summarise(CardCount = n()) |> 
+  ungroup()
+
+ggplot(monthly_card_counts, aes(x = Month, y = CardCount, color = factor(Year), group = Year)) +
+  geom_line(size = 1.2) +
+  geom_point() +
+  labs(
+    title = "Number of Cards per Month by Year",
+    x = "Month",
+    y = "Number of Cards",
+    color = "Year"
+  ) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1")
+
+# Graph 4
+df1 |> 
+  mutate(Date = as.Date(`Request Date`)) |> 
+  filter(!is.na(Date) & !is.na(`Worked Hours`)) |> 
+  group_by(Date = floor_date(Date, "week")) |> 
+  summarise(Total_Hours = sum(`Worked Hours`)) |> 
+  ggplot(aes(x = Date, y = Total_Hours)) +
+  geom_line(color = "blue") +
+  labs(title = "Worked Hours Over Time", x = "Week", y = "Total Hours Worked") +
+  theme_minimal()
+
+# Graph 5
+df1 |> 
+  filter(!is.na(`Request Date`) & !is.na(`Due Date`)) |> 
+  mutate(Duration = as.numeric(as.Date(`Due Date`) - as.Date(`Request Date`))) |> 
+  ggplot(aes(x = Status, y = Duration, fill = Status)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(title = "Task Duration by Status", x = "Status", y = "Days") +
+  theme_minimal()
+
+# Graph 6
+df1 |> 
+  filter(!is.na(Status) & !is.na(Labels)) |> 
+  separate_rows(Labels, sep = ",\\s*") |> 
+  count(Status, Labels) |> 
+  ggplot(aes(x = Status, y = n, fill = Labels)) +
+  geom_col(position = "stack") +
+  labs(title = "Priority Breakdown by Status", x = "Status", y = "Task Count") +
+  theme_minimal()
+
+# Graph 7
+df1 |> 
+  filter(!is.na(`List Name`)) |> 
+  count(`List Name`) |> 
+  ggplot(aes(x = reorder(`List Name`, n), y = n, fill = `List Name`)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "Tasks by Trello List", x = "List Name", y = "Count") +
+  theme_minimal()
+
+# Graph 8
+df1 |> 
+  select(`Card Name`) |> 
+  unnest_tokens(word, `Card Name`) |> 
+  anti_join(stop_words) |> 
+  count(word, sort = TRUE) |> 
+  slice_max(n, n = 10) |> 
+  ggplot(aes(x = reorder(word, n), y = n)) +
+  geom_col(fill = "darkorange") +
+  coord_flip() +
+  labs(title = "Top 10 Frequent Words in Card Names", x = "Word", y = "Count") +
+  theme_minimal()
+```
