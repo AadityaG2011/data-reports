@@ -6,7 +6,9 @@ website:
   navbar:
     left:
       - href: index.qmd
-        text: Home
+        text: Data & Reporting
+      - href: bonds-new-platform.qmd
+        text: Bonds New Platform
 
 format:
   html:

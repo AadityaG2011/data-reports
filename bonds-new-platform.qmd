@@ -1,7 +1,8 @@
 ---
-title: "Data & Reporting"
+title: "Bonds New Platform"
+format: html
 execute: 
-    echo: false
+  echo: false
 ---
 
 ```{r}
@@ -13,15 +14,15 @@ library(lubridate)
 library(tidytext)
 library(patchwork)
 
-df1 <- read_csv("data/data-reporting- trello.csv", show_col_types = FALSE)
+df2 <- read_csv("data/bonds-new-platform - trello.csv", show_col_types = FALSE)
 ```
 
 ```{r}
 #| message: false
 
-# Graph 1
+# Graph 10
 # Pie chart could also be used
-graph1 <- df1 |> 
+graph10 <- df2 |> 
   filter(!is.na(Status)) |> 
   count(Status) |> 
   ggplot(aes(x = reorder(Status, -n), y = n, fill = Status)) +
@@ -33,9 +34,9 @@ graph1 <- df1 |>
   ) +
   theme_minimal()
 
-# Graph 2
+# Graph 11
 # Pie chart could also be used
-graph2 <- df1 |> 
+graph11 <- df2 |> 
   filter(!is.na(Priority)) |> 
   count(Priority) |> 
   ggplot(aes(x = reorder(Priority, -n), y = n, fill = Priority)) +
@@ -47,20 +48,20 @@ graph2 <- df1 |>
   ) +
   theme_minimal()
 
-# Graph 3
+# Graph 12
 # Good
-df_clean <- df1 |> 
-  mutate(Date = as.Date(`Due Date`, format = "%Y-%m-%d"),
+df_clean2 <- df2 |> 
+  mutate(Date = as.Date(`Due Date...25`, format = "%Y-%m-%d"),
          Year = year(Date),
          Month = month(Date, label = TRUE, abbr = TRUE)) |> 
   filter(!is.na(Date))
 
-monthly_card_counts <- df_clean |> 
+monthly_card_counts2 <- df_clean2 |> 
   group_by(Year, Month) |> 
   summarise(CardCount = n()) |> 
   ungroup()
 
-graph3 <- ggplot(monthly_card_counts, aes(x = Month, y = CardCount, color = factor(Year), group = Year)) +
+graph12 <- ggplot(monthly_card_counts2, aes(x = Month, y = CardCount, color = factor(Year), group = Year)) +
   geom_line(linewidth = 1.2) +
   geom_point() +
   labs(
@@ -72,21 +73,21 @@ graph3 <- ggplot(monthly_card_counts, aes(x = Month, y = CardCount, color = fact
   theme_minimal() +
   scale_color_brewer(palette = "Set1")
 
-# Graph 4
+# Graph 13
 # Too clumped together, should be separate lines or faceted for year
-graph4 <- df1 |> 
-  mutate(Date = as.Date(`Request Date`)) |> 
-  filter(!is.na(Date) & !is.na(`Worked Hours`)) |> 
+graph13 <- df2 |> 
+  mutate(Date = as.Date(`Requested Date`)) |> 
+  filter(!is.na(Date) & !is.na(`Effort`)) |> 
   group_by(Date = floor_date(Date, "week")) |> 
-  summarise(Total_Hours = sum(`Worked Hours`)) |> 
+  summarise(Total_Hours = sum(`Effort`)) |> 
   ggplot(aes(x = Date, y = Total_Hours)) +
   geom_line(color = "blue") +
   labs(title = "Worked Hours Over Time", x = "Week", y = "Total Hours Worked") +
   theme_minimal()
 
-# Graph 5
+# Graph 14
 # Weird graph
-graph5 <- df1 |> 
+graph14 <- df2 |> 
   filter(!is.na(Status) & !is.na(Labels)) |> 
   separate_rows(Labels, sep = ",\\s*") |> 
   count(Status, Labels) |> 
@@ -95,34 +96,39 @@ graph5 <- df1 |>
   labs(title = "Priority Breakdown by Status", x = "Status", y = "Task Count") +
   theme_minimal()
 
-# Graph 6
+# Graph 15
 # Could be pie chart, maybe different list name order
-graph6 <- df1 |> 
+graph15 <- df2 |> 
   filter(!is.na(`List Name`)) |> 
   count(`List Name`) |> 
-  ggplot(aes(x = reorder(`List Name`, -n), y = n, fill = `List Name`)) +
+  ggplot(aes(x = reorder(`List Name`, n), y = n, fill = `List Name`)) +
   geom_col(show.legend = FALSE) +
+  coord_flip() +
   labs(title = "Tasks by Trello List", x = "List Name", y = "Count") +
   theme_minimal()
 
-# Graph 7
+# Graph 16
 # Could be pie chart
-graph7 <- df1 |> 
+top10words <- df2 |> 
   select(`Card Name`) |> 
   unnest_tokens(word, `Card Name`) |> 
   anti_join(stop_words) |> 
   count(word, sort = TRUE) |> 
   slice_max(n, n = 10) |> 
-  ggplot(aes(x = reorder(word, -n), y = n)) +
+  filter(word)
+
+graph16 <- top10words |> 
+  ggplot(aes(x = reorder(word, n), y = n)) +
   geom_col(fill = "darkorange") +
+  coord_flip() +
   labs(title = "Top 10 Frequent Words in Card Names", x = "Word", y = "Count") +
   theme_minimal()
 
-# Graph 8
-graph8 <- df1 %>%
-  filter(!is.na(`Members`)) %>%
-  separate_rows(`Members`, sep = ",\\s*") %>%
-  count(`Members`, sort = TRUE) %>%
+# Graph 17
+graph17 <- df2 |> 
+  filter(!is.na(`Members`)) |> 
+  separate_rows(`Members`, sep = ",\\s*") |> 
+  count(`Members`, sort = TRUE) |> 
   ggplot(aes(x = reorder(`Members`, n), y = n, fill = `Members`)) +
   geom_col(show.legend = FALSE) +
   coord_flip() +
@@ -133,12 +139,12 @@ graph8 <- df1 %>%
   ) +
   theme_minimal()
 
-# Graph 9
-graph9 <- df1 %>%
-  filter(!is.na(`Worked Hours`) & !is.na(Members)) %>%
-  separate_rows(Members, sep = ",\\s*") %>%
-  group_by(Members) %>%
-  summarise(Total_Worked_Hours = sum(`Worked Hours`, na.rm = TRUE)) %>%
+# Graph 18
+graph18 <- df2 |> 
+  filter(!is.na(`Effort`) & !is.na(Members)) |> 
+  separate_rows(Members, sep = ",\\s*") |> 
+  group_by(Members) |> 
+  summarise(Total_Worked_Hours = sum(`Effort`, na.rm = TRUE)) %>%
   ggplot(aes(x = reorder(Members, Total_Worked_Hours), y = Total_Worked_Hours, fill = Members)) +
   geom_col(show.legend = FALSE) +
   coord_flip() +
@@ -151,13 +157,13 @@ graph9 <- df1 %>%
 ```
 
 ```{r}
-graph1
-graph2
-graph3
-graph4
-graph5
-graph6
-graph7
-graph8
-graph9
+graph10
+graph11
+graph12
+graph13
+graph14
+graph15
+graph16
+graph17
+graph18
 ```
