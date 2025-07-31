@@ -115,7 +115,7 @@ top10words <- df2 |>
   anti_join(stop_words) |> 
   count(word, sort = TRUE) |> 
   slice_max(n, n = 10) |> 
-  filter(word)
+  filter(word %in% c("bonds", "bond", "ui", "ca", "cslb", "commercial", "integration", "vehicle", "dealer", "information"))
 
 graph16 <- top10words |> 
   ggplot(aes(x = reorder(word, n), y = n)) +
